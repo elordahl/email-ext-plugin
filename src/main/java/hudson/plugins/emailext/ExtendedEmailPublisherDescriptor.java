@@ -1,6 +1,5 @@
 package hudson.plugins.emailext;
 
-import hudson.Plugin;
 import hudson.matrix.MatrixProject;
 import hudson.model.AbstractProject;
 import hudson.plugins.emailext.plugins.EmailTrigger;
@@ -8,7 +7,6 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
-import hudson.util.VersionNumber;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
@@ -449,7 +447,7 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
             return FormValidation.error(e.getMessage());
         }
     }
-
+    
     public FormValidation doRecipientListRecipientsCheck(@QueryParameter final String value)
             throws IOException, ServletException {
         return new EmailRecipientUtils().validateFormRecipientList(value);

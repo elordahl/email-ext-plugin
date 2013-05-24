@@ -32,7 +32,7 @@ import jenkins.model.Jenkins;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import hudson.FilePath;
-import hudson.model.TaskListener;
+import hudson.model.Action;
 
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -249,6 +249,11 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
     public void debug(PrintStream p, String format, Object... args) {
         ExtendedEmailPublisher.DESCRIPTOR.debug(p, format, args);
     }
+    
+    @Override
+    public Collection<? extends Action> getProjectActions(AbstractProject<?,?> project) {
+        return Collections.singletonList(new EmailExtTemplateAction(project));
+    }
 
     @Override
     public boolean prebuild(AbstractBuild<?, ?> build, BuildListener listener) {
@@ -276,7 +281,7 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
         Map<String, EmailTrigger> triggered = new HashMap<String, EmailTrigger>();
 
         for (EmailTrigger trigger : configuredTriggers) {
-            if (trigger.isPreBuild() == forPreBuild && trigger.trigger(build)) {
+            if (trigger.isPreBuild() == forPreBuild && trigger.trigger(build, listener)) {
                 String tName = trigger.getDescriptor().getTriggerName();
                 triggered.put(tName, trigger);
                 listener.getLogger().println("Email was triggered for: " + tName);
@@ -798,12 +803,12 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
             extends ExtendedEmailPublisherDescriptor {
     }
 
-	public MatrixAggregator createAggregator(MatrixBuild matrixbuild,
-			Launcher launcher, BuildListener buildlistener) {
-		return new MatrixAggregator(matrixbuild, launcher, buildlistener) {
-			@Override
+    public MatrixAggregator createAggregator(MatrixBuild matrixbuild,
+            Launcher launcher, BuildListener buildlistener) {
+        return new MatrixAggregator(matrixbuild, launcher, buildlistener) {
+            @Override
             public boolean endBuild() throws InterruptedException, IOException {
-				LOGGER.log(Level.FINER,"end build of " + this.build.getDisplayName());
+                LOGGER.log(Level.FINER, "end build of " + this.build.getDisplayName());
 
                 // Will be run by parent so we check if needed to be executed by parent
                 if (getMatrixTriggerMode().forParent) {
@@ -811,12 +816,11 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
                 }
                 return true;
             }
-						
-			
-			@Override		 
-			public boolean startBuild() throws InterruptedException,IOException {
-				LOGGER.log(Level.FINER,"end build of " + this.build.getDisplayName());
-				// Will be run by parent so we check if needed to be executed by parent 
+
+            @Override
+            public boolean startBuild() throws InterruptedException, IOException {
+                LOGGER.log(Level.FINER, "end build of " + this.build.getDisplayName());
+                // Will be run by parent so we check if needed to be executed by parent 
                 if (getMatrixTriggerMode().forParent) {
                     return ExtendedEmailPublisher.this._perform(this.build, this.listener, true);
                 }
