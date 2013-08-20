@@ -1,6 +1,5 @@
 package hudson.plugins.emailext.plugins.trigger;
 
-import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.TaskListener;
@@ -8,42 +7,65 @@ import hudson.plugins.emailext.plugins.EmailTrigger;
 import hudson.plugins.emailext.plugins.EmailTriggerDescriptor;
 
 import java.io.IOException;
-import javax.servlet.ServletException;
-import org.kohsuke.stapler.DataBoundConstructor;
 
+import javax.servlet.ServletException;
+
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-public class SuccessTrigger extends EmailTrigger {
+public class FixedUnhealthyTrigger extends EmailTrigger {
 
-    public static final String TRIGGER_NAME = "Success";
-    
+    public static final String TRIGGER_NAME = "Fixed Unhealthy";
+
     @DataBoundConstructor
-    public SuccessTrigger(boolean sendToList, boolean sendToDevs, boolean sendToRequestor, String recipientList,
+    public FixedUnhealthyTrigger(boolean sendToList, boolean sendToDevs, boolean sendToRequestor, String recipientList,
             String replyTo, String subject, String body, String attachmentsPattern, int attachBuildLog) {
         super(sendToList, sendToDevs, sendToRequestor, recipientList, replyTo, subject, body, attachmentsPattern, attachBuildLog);
     }
 
     @Override
     public boolean trigger(AbstractBuild<?, ?> build, TaskListener listener) {
+
         Result buildResult = build.getResult();
 
         if (buildResult == Result.SUCCESS) {
-            return true;
+            AbstractBuild<?, ?> prevBuild = getPreviousBuild(build);
+            if (prevBuild != null && (prevBuild.getResult() == Result.UNSTABLE || prevBuild.getResult() == Result.FAILURE)) {
+                return true;
+            }
         }
 
         return false;
     }
 
-    @Extension
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+    /**
+     * Find most recent previous build matching certain criteria.
+     */
+    private AbstractBuild<?, ?> getPreviousBuild(AbstractBuild<?, ?> build) {
+
+        AbstractBuild<?, ?> prevBuild = build.getPreviousBuild();
+
+        // Skip ABORTED builds
+        if (prevBuild != null && (prevBuild.getResult() == Result.ABORTED)) {
+            return getPreviousBuild(prevBuild);
+        }
+
+        return prevBuild;
+    }
 
     @Override
     public EmailTriggerDescriptor getDescriptor() {
         return DESCRIPTOR;
     }
 
+    public static DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+
     public static final class DescriptorImpl extends EmailTriggerDescriptor {
+
+        public DescriptorImpl() {
+            addTriggerNameToReplace(SuccessTrigger.TRIGGER_NAME);
+        }
 
         @Override
         public String getDisplayName() {
@@ -52,9 +74,9 @@ public class SuccessTrigger extends EmailTrigger {
 
         @Override
         public void doHelp(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
-            rsp.getWriter().println(Messages.SuccessTrigger_HelpText());
+            rsp.getWriter().println(Messages.FixedTrigger_HelpText());
         }
-        
+
         @Override
         public boolean getDefaultSendToDevs() {
             return true;
@@ -62,7 +84,7 @@ public class SuccessTrigger extends EmailTrigger {
 
         @Override
         public boolean getDefaultSendToList() {
-            return false;
+            return true;
         }
-    }    
+    }
 }

@@ -35,7 +35,7 @@ if(changeSet != null) {
 <% 	changeSet.each() { cs ->
 		hadChanges = true %>		
       <TR>
-        <TD colspan="2" class="bg2">${spc}Revision <B><%= cs.metaClass.hasProperty('commitId') ? cs.commitId : cs.metaClass.hasProperty('revision') ? cs.revision : 
+        <TD colspan="2" class="bg2">&nbsp;&nbsp;Revision <B><%= cs.metaClass.hasProperty('commitId') ? cs.commitId : cs.metaClass.hasProperty('revision') ? cs.revision : 
         cs.metaClass.hasProperty('changeNumber') ? cs.changeNumber : "" %></B> by
           <B><%= cs.author %>: </B>
           <B>(${cs.msgAnnotated})</B>
@@ -43,7 +43,7 @@ if(changeSet != null) {
       </TR>
 <%		cs.affectedFiles.each() { p -> %>
         <TR>
-          <TD width="10%">${spc}${p.editType.name}</TD>
+          <TD width="10%">&nbsp;&nbsp;${p.editType.name}</TD>
           <TD>${p.path}</TD>
         </TR>
 <%		}
@@ -112,12 +112,30 @@ try {
 }
 %>
 
+<!-- JUnit TEMPLATE -->
+
+<% def junitResultList = it.JUnitTestResult
+if (junitResultList.size() > 0) { %>
+  <TABLE width="100%">
+    <TR><TD class="bg1" colspan="2"><B>JUnit Tests</B></TD></TR>
+    <% it.JUnitTestResult.each{ junitResult ->
+      junitResult.getChildren().each { packageResult -> %>
+        <TR><TD class="bg2" colspan="2"> Name: ${packageResult.getName()} Failed: ${packageResult.getFailCount()} test(s), Passed: ${packageResult.getPassCount()} test(s), Skipped: ${packageResult.getSkipCount()} test(s), Total: ${packageResult.getPassCount()+packageResult.getFailCount()+packageResult.getSkipCount()} test(s)</TD></TR>
+        <% packageResult.getFailedTests().each{ failed_test -> %>
+          <TR bgcolor="white"><TD class="test_failed" colspan="2"><B><li>Failed: ${failed_test.getFullName()} </li></B></TD></TR>
+        <% }
+      }
+    }
+} %>
+  </TABLE>
+<BR/>
+
 <!-- CONSOLE OUTPUT -->
 <% if(build.result==hudson.model.Result.FAILURE) { %>
 <TABLE width="100%" cellpadding="0" cellspacing="0">
 <TR><TD class="bg1"><B>CONSOLE OUTPUT</B></TD></TR>
 <% 	build.getLog(100).each() { line -> %>
-	<TR><TD class="console">${line}</TD></TR>
+	<TR><TD class="console">${org.apache.commons.lang.StringEscapeUtils.escapeHtml(line)}</TD></TR>
 <% 	} %>
 </TABLE>
 <BR/>

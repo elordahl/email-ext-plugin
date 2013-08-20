@@ -63,11 +63,9 @@ public class JellyScriptContent extends DataBoundTokenMacro {
             inputStream = getTemplateInputStream(template);
             return renderContent(build, inputStream);
         } catch (JellyException e) {
-            //LOGGER.log(Level.SEVERE, null, e);
             return "JellyException: " + e.getMessage();
         } catch (FileNotFoundException e) {
             String missingTemplateError = generateMissingTemplate(template);
-            //LOGGER.log(Level.SEVERE, missingTemplateError);
             return missingTemplateError;
         } finally {
             IOUtils.closeQuietly(inputStream);
@@ -88,12 +86,16 @@ public class JellyScriptContent extends DataBoundTokenMacro {
      */
     private InputStream getTemplateInputStream(String templateName)
             throws FileNotFoundException {
+        // add .jelly if needed
+        if (!templateName.endsWith(".jelly")) {
+            templateName += ".jelly";
+        }
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(
-                "hudson/plugins/emailext/templates/" + templateName + ".jelly");
+                "hudson/plugins/emailext/templates/" + templateName);
 
         if (inputStream == null) {
             final File templatesFolder = new File(Hudson.getInstance().getRootDir(), EMAIL_TEMPLATES_DIRECTORY);
-            final File templateFile = new File(templatesFolder, templateName + ".jelly");
+            final File templateFile = new File(templatesFolder, templateName);
             inputStream = new FileInputStream(templateFile);
         }
 
