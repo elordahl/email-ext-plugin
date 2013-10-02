@@ -64,6 +64,11 @@ public class EmailType {
      * List of email addresses to put into the Reply-To header
      */
     private String replyTo;
+    
+    /**
+     * Content type to send the email as (HTML or Plaintext)
+     */
+    private String contentType;
 
     public EmailType() {
         subject = "";
@@ -77,6 +82,7 @@ public class EmailType {
         attachBuildLog = false;
         compressBuildLog = false;
         replyTo = "";
+        contentType = "project";
     }
 
     public String getSubject() {
@@ -103,7 +109,7 @@ public class EmailType {
         this.sendToDevelopers = sendToDevelopers;
     }
 
-    public boolean isSendToRequester() {
+    public boolean getSendToRequester() {
         return sendToRequester;
     }
 
@@ -111,12 +117,12 @@ public class EmailType {
         this.sendToRequester = sendToRequester;
     }
 
-    public boolean getIncludeCulprits() {
+    public boolean getSendToCulprits() {
         return includeCulprits;
     }
 
-    public void setIncludeCulprits(boolean includeCulprits) {
-        this.includeCulprits = includeCulprits;
+    public void setSendToCulprits(boolean sendToCulprits) {
+        this.includeCulprits = sendToCulprits;
     }
 
     public boolean getSendToRecipientList() {
@@ -171,6 +177,16 @@ public class EmailType {
 
     public void setCompressBuildLog(boolean compressBuildLog) {
         this.compressBuildLog = compressBuildLog;
+    }
+    
+    public String getContentType() {
+        if(contentType == null)
+            contentType = "project";
+        return contentType;
+    }
+    
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
     public Object readResolve() {

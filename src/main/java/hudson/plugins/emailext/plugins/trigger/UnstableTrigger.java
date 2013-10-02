@@ -19,9 +19,9 @@ public class UnstableTrigger extends EmailTrigger {
     public static final String TRIGGER_NAME = "Unstable";
     
     @DataBoundConstructor
-    public UnstableTrigger(boolean sendToList, boolean sendToDevs, boolean sendToRequestor, String recipientList,
-            String replyTo, String subject, String body, String attachmentsPattern, int attachBuildLog) {
-        super(sendToList, sendToDevs, sendToRequestor, recipientList, replyTo, subject, body, attachmentsPattern, attachBuildLog);
+    public UnstableTrigger(boolean sendToList, boolean sendToDevs, boolean sendToRequestor, boolean sendToCulprits, String recipientList,
+            String replyTo, String subject, String body, String attachmentsPattern, int attachBuildLog, String contentType) {
+        super(sendToList, sendToDevs, sendToRequestor, sendToCulprits, recipientList, replyTo, subject, body, attachmentsPattern, attachBuildLog, contentType);
     }
 
     @Override

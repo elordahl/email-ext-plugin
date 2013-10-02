@@ -155,7 +155,7 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
     public String getDefaultSuffix() {
         return defaultSuffix;
     }
-
+    
     /**
      * JavaMail session.
      */
@@ -320,7 +320,7 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
                 
         m.configuredTriggers = req.bindJSONToList(EmailTrigger.class, formData.get("project_triggers"));
         
-        m.setMatrixTriggerMode(req.bindJSON(MatrixTriggerMode.class, MatrixTriggerMode.class, formData.opt("project_matrix_trigger_mode")));
+        m.setMatrixTriggerMode(req.bindJSON(MatrixTriggerMode.class, MatrixTriggerMode.class, formData.opt("matrixTriggerMode")));
 
         return m;
     }
@@ -388,6 +388,7 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
             req.getParameter("ext_mailer_default_presend_script") : "";
 
         debugMode = req.getParameter("ext_mailer_debug_mode") != null;
+        
         //enableWatching = req.getParameter("ext_mailer_enable_watching") != null;
 
         // convert the value into megabytes (1024 * 1024 bytes)

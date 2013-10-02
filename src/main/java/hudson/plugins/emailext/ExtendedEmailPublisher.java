@@ -69,6 +69,7 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.SendFailedException;
+import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -152,7 +153,7 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
      * If true, save the generated email content to email-ext-message.[txt|html]
      */
     public boolean saveOutput = false;
-
+    
     /**
      * How to trigger the email if the project is a matrix project.
      */
@@ -409,16 +410,23 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
 
         // If not overriding global settings, use the Mailer class to create a session and set the from address
         // Else we'll do it ourselves
+        Session session;
         if (!overrideGlobalSettings) {
             debug(listener.getLogger(), "NOT overriding default server settings, using Mailer to create session");
-            msg = new MimeMessage(Mailer.descriptor().createSession());
+            session = Mailer.descriptor().createSession();
+            msg = new MimeMessage(session);
             msg.setFrom(new InternetAddress(Mailer.descriptor().getAdminAddress()));
         } else {
             debug(listener.getLogger(), "Overriding default server settings, creating our own session");
-            msg = new MimeMessage(ExtendedEmailPublisher.DESCRIPTOR.createSession());
+            session = ExtendedEmailPublisher.DESCRIPTOR.createSession();
+            msg = new MimeMessage(session);
             msg.setFrom(new InternetAddress(ExtendedEmailPublisher.DESCRIPTOR.getAdminAddress()));
         }
-
+        
+        if(ExtendedEmailPublisher.DESCRIPTOR.isDebugMode()) {
+            session.setDebugOut(listener.getLogger());
+        }
+        
         String charset = Mailer.descriptor().getCharset();
         if (overrideGlobalSettings) {
             String overrideCharset = ExtendedEmailPublisher.DESCRIPTOR.getCharset();
@@ -476,7 +484,7 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
         if (type.getSendToDevelopers()) {
             debug(listener.getLogger(), "Adding developers");
             Set<User> users;
-            if (type.getIncludeCulprits()) {
+            if (type.getSendToCulprits()) {
                 users = build.getCulprits();
             } else {
                 users = new HashSet<User>();
@@ -486,9 +494,10 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
             }
             
             for (User user : users) {
-                if (!isExcludedCommitter(user.getFullName())) {
+                if (!isExcludedCommitter(user.getFullName(), listener) && !isExcludedCommitter(user.getId(), listener)) {
                     String userAddress = EmailRecipientUtils.getUserConfiguredEmail(user);
                     if (userAddress != null) {
+                        debug(listener.getLogger(), "Adding user address %s, they were not considered an excluded committer", userAddress);
                         addAddressesFromRecipientList(recipientAddresses, ccAddresses, userAddress, env, listener);
                     } else {
                         listener.getLogger().println("Failed to send e-mail to " + user.getFullName() + " because no e-mail address is known, and no default e-mail domain is configured");
@@ -497,7 +506,7 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
             }
         }
 
-        if (type.isSendToRequester()) {
+        if (type.getSendToRequester()) {
             debug(listener.getLogger(), "Sending to requester");
             // looking for Upstream build.
             AbstractBuild<?, ?> cur = build;
@@ -584,9 +593,10 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
         return msg;
     }
 
-    private boolean isExcludedCommitter(String userName) {
+    private boolean isExcludedCommitter(String userName, BuildListener listener) {
         StringTokenizer tokens = new StringTokenizer(DESCRIPTOR.getExcludedCommitters(), ",");
         while (tokens.hasMoreTokens()) {
+            debug(listener.getLogger(), "Checking '%s' against '%s' to see if they are excluded", userName, tokens.nextToken().trim());
             if (tokens.nextToken().trim().equalsIgnoreCase(userName)) {
                 return true;
             }
@@ -669,7 +679,7 @@ public class ExtendedEmailPublisher extends Notifier implements MatrixAggregatab
             throws MessagingException {
         final String text = new ContentBuilder().transformText(type.getBody(), this, build, listener);
         
-        String messageContentType = contentType;
+        String messageContentType = type.getContentType().equals("project") ? contentType : type.getContentType();
         // contentType is null if the project was not reconfigured after upgrading.
         if (messageContentType == null || "default".equals(messageContentType)) {
             messageContentType = DESCRIPTOR.getDefaultContentType();

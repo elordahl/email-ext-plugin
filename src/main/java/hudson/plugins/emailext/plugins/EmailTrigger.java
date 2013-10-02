@@ -25,8 +25,8 @@ public abstract class EmailTrigger implements Describable<EmailTrigger>, Extensi
         return Jenkins.getInstance().<EmailTrigger, EmailTriggerDescriptor>getDescriptorList(EmailTrigger.class);
     }
 
-    protected EmailTrigger(boolean sendToList, boolean sendToDevs, boolean sendToRequestor, String recipientList,
-            String replyTo, String subject, String body, String attachmentsPattern, int attachBuildLog) {
+    protected EmailTrigger(boolean sendToList, boolean sendToDevs, boolean sendToRequestor, boolean sendToCulprits, String recipientList,
+            String replyTo, String subject, String body, String attachmentsPattern, int attachBuildLog, String contentType) {
         email = new EmailType();
         email.setSendToRecipientList(sendToList);
         email.setSendToDevelopers(sendToDevs);
@@ -38,6 +38,8 @@ public abstract class EmailTrigger implements Describable<EmailTrigger>, Extensi
         email.setAttachmentsPattern(attachmentsPattern);
         email.setAttachBuildLog(attachBuildLog > 0);
         email.setCompressBuildLog(attachBuildLog > 1);
+        email.setContentType(contentType);
+        email.setSendToCulprits(sendToCulprits);
     }
     
     protected EmailTrigger(JSONObject formData) {
@@ -128,10 +130,11 @@ public abstract class EmailTrigger implements Describable<EmailTrigger>, Extensi
         m.setSendToRecipientList(formData.optBoolean(prefix + "sendToRecipientList"));
         m.setSendToDevelopers(formData.optBoolean(prefix + "sendToDevelopers"));
         m.setSendToRequester(formData.optBoolean(prefix + "sendToRequester"));
-        m.setIncludeCulprits(formData.optBoolean(prefix + "includeCulprits"));
+        m.setSendToCulprits(formData.optBoolean(prefix + "sendToCulprits"));
         m.setAttachmentsPattern(formData.getString(prefix + "attachmentsPattern"));
         m.setAttachBuildLog(formData.optBoolean(prefix + "attachBuildLog"));
         m.setReplyTo(formData.getString(prefix + "replyTo"));
+        m.setContentType(formData.getString(prefix + "contentType"));
         return m;
     }
 }
