@@ -1,8 +1,8 @@
 package hudson.plugins.emailext;
 
+import hudson.Extension;
 import hudson.matrix.MatrixProject;
 import hudson.model.AbstractProject;
-import hudson.plugins.emailext.plugins.EmailTrigger;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
@@ -25,7 +25,8 @@ import java.util.Properties;
 /**
  * These settings are global configurations
  */
-public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publisher> {
+@Extension
+public final class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publisher> {
 
     /**
      * The default e-mail address suffix appended to the user name found from changelog,
@@ -130,9 +131,9 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
 
     private boolean precedenceBulk;
 
-    private boolean debugMode;
+    private boolean debugMode = false;
 
-    private boolean enableSecurity;
+    private boolean enableSecurity = false;
     
     /**
      * Enables the "Watch This Job" feature
@@ -299,31 +300,6 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
     public String getDefaultPresendScript() {
         return defaultPresendScript;
     }
-    
-    @Override
-    public Publisher newInstance(StaplerRequest req, JSONObject formData)
-            throws hudson.model.Descriptor.FormException {
-
-        // Save configuration for each trigger type
-        ExtendedEmailPublisher m = new ExtendedEmailPublisher();
-        m.recipientList = formData.getString("project_recipient_list");
-        m.contentType = formData.getString("project_content_type");
-        m.defaultSubject = formData.getString("project_default_subject");
-        m.defaultContent = formData.getString("project_default_content");
-        m.attachmentsPattern = formData.getString("project_attachments");
-        m.presendScript = formData.getString("project_presend_script");
-        int attachBuildLogLevel = formData.optInt("project_attach_buildlog", 0);
-        m.attachBuildLog = attachBuildLogLevel > 0;
-        m.compressBuildLog = attachBuildLogLevel > 1;
-        m.replyTo = formData.getString("project_replyto");
-        m.saveOutput = "true".equalsIgnoreCase(formData.optString("project_save_output"));
-                
-        m.configuredTriggers = req.bindJSONToList(EmailTrigger.class, formData.get("project_triggers"));
-        
-        m.setMatrixTriggerMode(req.bindJSON(MatrixTriggerMode.class, MatrixTriggerMode.class, formData.opt("matrixTriggerMode")));
-
-        return m;
-    }
 
     public ExtendedEmailPublisherDescriptor() {
         super(ExtendedEmailPublisher.class);
@@ -333,6 +309,7 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
             defaultSubject = ExtendedEmailPublisher.DEFAULT_SUBJECT_TEXT;
             emergencyReroute = ExtendedEmailPublisher.DEFAULT_EMERGENCY_REROUTE_TEXT;
             systemAdministrator = ExtendedEmailPublisher.DEFAULT_SYSTEM_ADMINISTRATOR_TEXT;
+			enableSecurity = false;
         }
     }
 
@@ -341,7 +318,7 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
             throws FormException {
         // Most of this stuff is the same as the built-in email publisher
 
-        overrideGlobalSettings = req.getParameter("ext_mailer_override_global_settings") != null;
+        overrideGlobalSettings = req.hasParameter("ext_mailer_override_global_settings");
 
         // Configure the smtp server
         smtpHost = nullify(req.getParameter("ext_mailer_smtp_server"));
@@ -359,16 +336,16 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
         hudsonUrl = url;
 
         // specify authentication information
-        if (req.getParameter("extmailer.useSMTPAuth") != null) {
-            smtpAuthUsername = nullify(req.getParameter("extmailer.SMTPAuth.userName"));
-            smtpAuthPassword = Secret.fromString(nullify(req.getParameter("extmailer.SMTPAuth.password")));
+        if (req.hasParameter("ext_mailer_use_smtp_auth")) {
+            smtpAuthUsername = nullify(req.getParameter("ext_mailer_smtp_username"));
+            smtpAuthPassword = Secret.fromString(nullify(req.getParameter("ext_mailer_smtp_password")));
         } else {
             smtpAuthUsername = null;
             smtpAuthPassword = null;
         }
 
         // specify if the mail server uses ssl for authentication
-        useSsl = req.getParameter("ext_mailer_smtp_use_ssl") != null;
+        useSsl = req.hasParameter("ext_mailer_smtp_use_ssl");
 
         // specify custom smtp port
         smtpPort = nullify(req.getParameter("ext_mailer_smtp_port"));
@@ -387,7 +364,7 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
         defaultPresendScript = nullify(req.getParameter("ext_mailer_default_presend_script")) != null ?
             req.getParameter("ext_mailer_default_presend_script") : "";
 
-        debugMode = req.getParameter("ext_mailer_debug_mode") != null;
+        debugMode = req.hasParameter("ext_mailer_debug_mode");
         
         //enableWatching = req.getParameter("ext_mailer_enable_watching") != null;
 
@@ -397,14 +374,14 @@ public class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<Publis
         recipientList = nullify(req.getParameter("ext_mailer_default_recipients")) != null ?
             req.getParameter("ext_mailer_default_recipients") : "";
 
-        precedenceBulk = req.getParameter("extmailer.addPrecedenceBulk") != null;
-        enableSecurity = req.getParameter("ext_mailer_security_enabled") != null;
+        precedenceBulk = req.hasParameter("ext_mailer_add_precedence_bulk");
+        enableSecurity = req.hasParameter("ext_mailer_security_enabled");
 
         excludedCommitters = req.getParameter("ext_mailer_excluded_committers");
 
         // specify List-ID information
-        if (req.getParameter("extmailer.useListID") != null) {
-            listId = nullify(req.getParameter("extmailer.ListID.id"));
+        if (req.hasParameter("ext_mailer_use_list_id")) {
+            listId = nullify(req.getParameter("ext_mailer_list_id"));
         } else {
             listId = null;
         }

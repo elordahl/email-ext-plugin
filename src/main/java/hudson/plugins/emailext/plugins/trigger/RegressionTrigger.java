@@ -7,12 +7,8 @@ import hudson.model.TaskListener;
 import hudson.plugins.emailext.plugins.EmailTrigger;
 import hudson.plugins.emailext.plugins.EmailTriggerDescriptor;
 
-import java.io.IOException;
-import javax.servlet.ServletException;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
 public class RegressionTrigger extends EmailTrigger {
     
@@ -37,13 +33,6 @@ public class RegressionTrigger extends EmailTrigger {
     }
 
     @Extension
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
-    @Override
-    public EmailTriggerDescriptor getDescriptor() {
-        return DESCRIPTOR;
-    }
-    
     public static final class DescriptorImpl extends EmailTriggerDescriptor {
 
         public DescriptorImpl() {
@@ -55,11 +44,6 @@ public class RegressionTrigger extends EmailTrigger {
         public String getDisplayName() {
             return TRIGGER_NAME;
         }
-
-        @Override
-        public void doHelp(StaplerRequest req, StaplerResponse rsp)throws IOException, ServletException {
-            rsp.getWriter().println(Messages.RegressionTrigger_HelpText());
-        } 
         
         @Override
         public boolean getDefaultSendToDevs() {

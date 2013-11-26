@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import static org.junit.Assert.*;
+import org.jvnet.hudson.test.Bug;
 
 public class ExtendedEmailPublisherDescriptorTest {
     
@@ -18,7 +19,6 @@ public class ExtendedEmailPublisherDescriptorTest {
 
     @Test
     public void testGlobalConfigDefaultState() throws Exception {
-        /*
         HtmlPage page = j.createWebClient().goTo("configure");
 
         assertEquals("Should be at the Configure System page",
@@ -35,11 +35,11 @@ public class ExtendedEmailPublisherDescriptorTest {
         assertEquals("Plain text should be selected by default",
                 "text/plain", contentType.getSelectedOptions().get(0).getValueAttribute());
 
-        HtmlCheckBoxInput useListId = page.getElementByName("extmailer.useListID");
+        HtmlCheckBoxInput useListId = page.getElementByName("ext_mailer_use_list_id");
         assertNotNull("Use List ID should be present", useListId);
         assertFalse("Use List ID should not be checked by default", useListId.isChecked());
 
-        HtmlCheckBoxInput precedenceBulk = page.getElementByName("extmailer.addPrecedenceBulk");
+        HtmlCheckBoxInput precedenceBulk = page.getElementByName("ext_mailer_add_precedence_bulk");
         assertNotNull("Precedence Bulk should be present", precedenceBulk);
         assertFalse("Add precedence bulk should not be checked by default",
                 precedenceBulk.isChecked());
@@ -58,6 +58,11 @@ public class ExtendedEmailPublisherDescriptorTest {
         assertNotNull("Emergency Reroute should be present", emergencyReroute);
         assertEquals("Emergency Reroute should be blank by default", 
                 "", emergencyReroute.getText());
+        
+        HtmlTextInput excludedRecipients = page.getElementByName("ext_mailer_excluded_committers");
+        assertNotNull("Excluded Recipients should be present", excludedRecipients);
+        assertEquals("Excluded Recipients should be blank by default",
+                "", excludedRecipients.getText());
 
         HtmlTextInput defaultSubject = page.getElementByName("ext_mailer_default_subject");
         assertNotNull("Default Subject should be present", defaultSubject);
@@ -83,6 +88,44 @@ public class ExtendedEmailPublisherDescriptorTest {
         HtmlCheckBoxInput securityMode = page.getElementByName("ext_mailer_security_enabled");
         assertNotNull("Security mode should be present", securityMode);
         assertFalse("Security mode should not be checked by default", securityMode.isChecked());
-        */
+    }
+    
+    @Test
+    @Bug(20030)
+    public void testGlobalConfigSimpleRoundTrip() throws Exception {
+        ExtendedEmailPublisherDescriptor descriptor = j.jenkins.getDescriptorByType(ExtendedEmailPublisherDescriptor.class);        
+        HtmlPage page = j.createWebClient().goTo("configure");
+        HtmlTextInput defaultRecipients = page.getElementByName("ext_mailer_default_recipients");
+        defaultRecipients.setValueAttribute("mickey@disney.com");
+        j.submit(page.getFormByName("config"));       
+        
+        assertEquals("mickey@disney.com", descriptor.getDefaultRecipients());
+    }
+
+    @Test
+    @Bug(20133)
+    public void testPrecedenceBulkSettingRoundTrip() throws Exception {
+        ExtendedEmailPublisherDescriptor descriptor = j.jenkins.getDescriptorByType(ExtendedEmailPublisherDescriptor.class);
+        HtmlPage page = j.createWebClient().goTo("configure");
+        HtmlCheckBoxInput addPrecedenceBulk = page.getElementByName("ext_mailer_add_precedence_bulk");
+        addPrecedenceBulk.setChecked(true);
+        j.submit(page.getFormByName("config"));
+
+        assertEquals(true, descriptor.getPrecedenceBulk());
+    }
+
+    @Test
+    @Bug(20133)
+    public void testListIDRoundTrip() throws Exception {
+        ExtendedEmailPublisherDescriptor descriptor = j.jenkins.getDescriptorByType(ExtendedEmailPublisherDescriptor.class);
+        HtmlPage page = j.createWebClient().goTo("configure");
+        HtmlCheckBoxInput useListId = page.getElementByName("ext_mailer_use_list_id");
+        useListId.setChecked(true);
+        HtmlTextInput listId = page.getElementByName("ext_mailer_list_id");
+        listId.setValueAttribute("hammer");
+
+        j.submit(page.getFormByName("config"));
+
+        assertEquals("hammer", descriptor.getListId());
     }
 }

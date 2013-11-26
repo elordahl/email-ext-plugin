@@ -1,18 +1,13 @@
 package hudson.plugins.emailext.plugins.trigger;
 
+import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.plugins.emailext.plugins.EmailTrigger;
 import hudson.plugins.emailext.plugins.EmailTriggerDescriptor;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
 public class FixedUnhealthyTrigger extends EmailTrigger {
 
@@ -54,13 +49,7 @@ public class FixedUnhealthyTrigger extends EmailTrigger {
         return prevBuild;
     }
 
-    @Override
-    public EmailTriggerDescriptor getDescriptor() {
-        return DESCRIPTOR;
-    }
-
-    public static DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
+    @Extension
     public static final class DescriptorImpl extends EmailTriggerDescriptor {
 
         public DescriptorImpl() {
@@ -70,11 +59,6 @@ public class FixedUnhealthyTrigger extends EmailTrigger {
         @Override
         public String getDisplayName() {
             return TRIGGER_NAME;
-        }
-
-        @Override
-        public void doHelp(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
-            rsp.getWriter().println(Messages.FixedTrigger_HelpText());
         }
 
         @Override
