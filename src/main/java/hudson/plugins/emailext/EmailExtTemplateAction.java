@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package hudson.plugins.emailext;
 
 import hudson.model.AbstractBuild;
@@ -23,7 +19,7 @@ import org.kohsuke.stapler.bind.JavaScriptMethod;
  */
 public class EmailExtTemplateAction implements Action {
     
-    private AbstractProject<?,?> project;
+    private final AbstractProject<?,?> project;
 
     public EmailExtTemplateAction(AbstractProject<?,?> project) {
         this.project = project;        

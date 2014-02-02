@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package hudson.plugins.emailext.plugins.trigger;
 
 import hudson.Extension;
@@ -20,10 +14,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 public class AlwaysTrigger extends EmailTrigger {
 
     public static final String TRIGGER_NAME = "Always";
-    
-    public static AlwaysTrigger createDefault() {
-        return new AlwaysTrigger(true, true, true, true, "", "$PROJECT_DEFAULT_REPLYTO", "$PROJECT_DEFAULT_SUBJECT", "$PROJECT_DEFAULT_CONTENT", "", 0, "project");
-    }
     
     @DataBoundConstructor
     public AlwaysTrigger(boolean sendToList, boolean sendToDevs, boolean sendToRequestor, boolean sendToCulprits, String recipientList,

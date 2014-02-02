@@ -1,35 +1,39 @@
 package hudson.plugins.emailext.plugins.trigger;
 
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import hudson.model.AbstractBuild;
 import hudson.plugins.emailext.ExtendedEmailPublisher;
-import hudson.plugins.emailext.plugins.EmailTrigger;
 import hudson.plugins.emailext.plugins.EmailTriggerDescriptor;
+import hudson.plugins.emailext.plugins.EmailTrigger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+public class StatusChangedTrigger extends EmailTrigger {
 
-public class StillUnstableTrigger extends EmailTrigger {
+    public static final String TRIGGER_NAME = "Status Changed";
 
-    public static final String TRIGGER_NAME = "Still Unstable";
-    
     @DataBoundConstructor
-    public StillUnstableTrigger(boolean sendToList, boolean sendToDevs, boolean sendToRequestor, boolean sendToCulprits, String recipientList,
+    public StatusChangedTrigger(boolean sendToList, boolean sendToDevs, boolean sendToRequestor, boolean sendToCulprits, String recipientList,
             String replyTo, String subject, String body, String attachmentsPattern, int attachBuildLog, String contentType) {
+
         super(sendToList, sendToDevs, sendToRequestor, sendToCulprits, recipientList, replyTo, subject, body, attachmentsPattern, attachBuildLog, contentType);
     }
 
     @Override
     public boolean trigger(AbstractBuild<?, ?> build, TaskListener listener) {
-        Result buildResult = build.getResult();
+        final Result buildResult = build.getResult();
 
-        if (buildResult == Result.UNSTABLE) {
-            AbstractBuild<?, ?> prevBuild = ExtendedEmailPublisher.getPreviousBuild(build, listener);
-            if (prevBuild != null && (prevBuild.getResult() == Result.UNSTABLE)) {
-                return true;
+        if (buildResult != null) {
+            final AbstractBuild<?, ?> prevBuild = ExtendedEmailPublisher.getPreviousBuild(build, listener);
+
+            if (prevBuild == null) {
+            	// Notify at the first status defined
+            	return true;
             }
+
+            return (build.getResult() != prevBuild.getResult());
         }
 
         return false;
@@ -37,16 +41,11 @@ public class StillUnstableTrigger extends EmailTrigger {
 
     @Extension
     public static final class DescriptorImpl extends EmailTriggerDescriptor {
-
-        public DescriptorImpl() {
-            addTriggerNameToReplace(UnstableTrigger.TRIGGER_NAME);
-        }
-
         @Override
         public String getDisplayName() {
             return TRIGGER_NAME;
         }
-        
+
         @Override
         public boolean getDefaultSendToDevs() {
             return true;
@@ -56,5 +55,5 @@ public class StillUnstableTrigger extends EmailTrigger {
         public boolean getDefaultSendToList() {
             return false;
         }
-    }    
+    }
 }
